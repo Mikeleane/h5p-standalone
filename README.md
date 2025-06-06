@@ -9,41 +9,37 @@ yarn | `yarn add h5p-standalone`
 Release | [Download latest version here](https://github.com/tunapanda/h5p-standalone/releases/latest)
 
 ## Basic Usage
-Ensure you have an extracted H5P zip file in your workspace folder first. A simple guide on how to extract an H5P zip file is provided  [here ](#extracting-h5p)
+First, make sure you have an H5P file (`.h5p`). You'll need to extract its contents into a folder in your project. You can find a simple guide on how to do this in the [Extracting H5P](#extracting-h5p) section.
 
+The player can be set up in two ways:
 
-The player can be set up either by directly calling the already built scripts and styles in your `HTML` page or using `ES6` syntax.
-
-### Direct use
-1.  Download the project latest release zipped source code from [here](https://github.com/tunapanda/h5p-standalone/releases/latest)
-2. Extract the downloaded zipped code in step 1 above
-3. Copy the contents of the `dist` folder into your workspace static `assets` folder ( _The folder name does not matter. Remember the location for the next step_ )
-4. Add a  `div` element in your HTML page where you want to display the H5P content. The `div` element should have a unique `id` attribute as compared to all other elements on the same page.
+### 1. Direct use in HTML
+1.  Download the latest release source code (zip file) from [here](https://github.com/tunapanda/h5p-standalone/releases/latest).
+2.  Extract the downloaded zip file.
+3.  Copy the contents of the `dist` folder into a suitable location in your project, for example, an `assets` folder. (The exact folder name doesn't matter, just note the path for the next steps).
+4.  Add a `div` element in your HTML page where you want to display the H5P content. This `div` must have a unique `id` attribute.
     ```html
-    <div id='h5p-container'></div>
+    <div id="h5p-container"></div>
     ```
 
-5. Include the H5P standalone main script in your HTML page (_modify the path location if the files are not in the assets folder_)
+5.  Include the H5P standalone main script in your HTML page. (Modify the `src` path if you placed the `dist` contents in a different location than `assets`).
     ```html
     <script type="text/javascript" src="assets/main.bundle.js"></script>
     ```
-6. Call the H5P player by providing arguments on where to find a `div` element and the location of the H5P content.
+6.  Call the H5P player, providing the `id` of your `div` and the path to your H5P content.
     ```javascript
 
     const el = document.getElementById('h5p-container');
     const options = {
-      h5pJsonPath:  '/h5p-folder',
-      frameJs: '/assets/frame.bundle.js',
-      frameCss: '/assets/styles/h5p.css',
-    }
-   new H5PStandalone.H5P(el, options);
-
+      h5pJsonPath: 'h5p-folder',      // Path to the extracted H5P content (relative to HTML or absolute)
+      frameJs: 'assets/frame.bundle.js', // Path to the player's JavaScript file (relative or absolute)
+      frameCss: 'assets/styles/h5p.css', // Path to the player's CSS file (relative or absolute)
+    };
+    new H5PStandalone.H5P(el, options);
     ```
-    A detailed description of the H5P player arguments are provided  under the [advance section](#advanced-usage)
-    Simple instruction on how to extract H5P zipped file provided [here](#extracting-h5p)
 
-### Using ES6
-Install the player using yarn
+### 2. Using ES6
+Install the player using yarn:
 
 ```
 yarn add h5p-standalone
@@ -61,54 +57,71 @@ import { H5P } from 'h5p-standalone'; // ES6
 
 const el = document.getElementById('h5p-container');
 const options = {
-    h5pJsonPath: '/h5p-folder',
-    frameJs: '/assets/frame.bundle.js',
-    frameCss: '/assets/styles/h5p.css',
+    h5pJsonPath: '/h5p-folder',      // Path to the extracted H5P content
+    frameJs: './assets/frame.bundle.js', // Path to the player's JavaScript file (relative to your HTML file or an absolute URL)
+    frameCss: './assets/styles/h5p.css', // Path to the player's CSS file (relative to your HTML file or an absolute URL)
 };
 
 new H5P(el, options);
 ```
-   A detailed description of the H5P player arguments are provided under the [advance section](#advanced-usage)
+
+A detailed description of all H5P player arguments is provided in the [Advanced Usage](#advanced-usage) section.
+
+## Working with H5P Content
+
+H5P files (with the `.h5p` extension) are essentially zip archives. Before you can use them with this player, you need to extract their contents into a folder within your project.
+
+**Important Note on H5P Libraries:**
+
+Content exported directly from h5p.org might not include all the necessary H5P libraries required for the content to function correctly. This is because h5p.org optimizes exports by assuming the libraries are already present on the target platform.
+
+If you encounter issues with missing libraries, you have a couple of options:
+
+*   **Manually download libraries:** You might need to identify the missing libraries and download them separately from h5p.org, then place them in the appropriate H5P content folder.
+*   **Use bundled H5P content:** Obtain your H5P content from a source that explicitly bundles all required libraries within the `.h5p` file. Platforms like Lumi (https://lumi.education/) often provide such bundled exports.
+
 ## Advanced Usage
-The standalone H5P player constructor accepts two arguments.
-1. A HTML element where the H5P iframe will be embedded as the first argument.
-2. JSON object with the following options :
+The standalone H5P player constructor `new H5PStandalone.H5P(el, options)` or `new H5P(el, options)` accepts two arguments:
+1. An HTML element where the H5P iframe will be embedded.
+2. A JSON object with the following options:
+
 ### H5P Options
 1) Basic options
 
 **Option name**|**Required**|**Description**
 -----|-----|----
-`h5pJsonPath`   | Yes | Path to the H5P content folder
-`frameCss`  | Yes | URL to the standalone player `h5p.css`
-`frameJs`   |Yes | URL to the standalone player `frame.bundle.js`
-`id`    | No | Player unique identifier. Randomly generated by default
-`librariesPath` | No| Path where the player should find the H5P content libraries. Defaults to same as `h5pJsonPath`
-`contentJsonPath`|No | Path where the player should find the H5P `content.json` file. Defaults to  `{h5pJsonPath}/content/`,
-`frame` |No| A boolean on whether to show H5P player frame and buttons 
-`copyright` |No| A boolean on whether display copyright button
-`export` |No|  A boolean on whether display a download button.
-`icon`  |No|   A boolean on whether display H5P icon
-`downloadUrl` |No| A path or a url that returns zipped h5p for download. The link is used by H5P `export` button
-`fullScreen` |No| A boolean on whether to enable the fullscreen button if the browser supports the feature. Default is `false`|
-`embed` |No| A boolean on whether display embed button. Default is `false`.  N.B. Setting this option to `true` will require an `embedCode` below.
-`embedCode` |unless `embed` is true| Embed/Iframe code that user can insert on their site to view the same content. Check some caveats to consider [below](#caveats-while-adding-embed-code)
-`customCss` | No | Path(s) to custom stylesheet file(s)
-`customJs` | No | Path(s) to custom script file(s)
-`xAPIObjectIRI`|No| An identifier for a single unique Activity ~ utilized when generating xAPI [object](https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#acturi) field. Default is page host+pathname
+`h5pJsonPath`   | Yes | String. Path to the H5P content folder.
+`frameCss`  | Yes | String. URL to the standalone player `h5p.css`.
+`frameJs`   |Yes | String. URL to the standalone player `frame.bundle.js`.
+`id`    | No | String. Player unique identifier. Randomly generated by default.
+`librariesPath` | No| String. Path where the player should find the H5P content libraries. Defaults to the `h5pJsonPath`.
+`contentJsonPath`|No | String. Path where the player should find the H5P `content.json` file. Defaults to  `{h5pJsonPath}/content`.
+`frame` |No| Boolean. Whether to show the H5P player frame and buttons. Default is `false`.
+`copyright` |No| Boolean. Whether to display the copyright button. Default is `false`.
+`export` |No|  Boolean. Whether to display a download button. Default is `false`.
+`icon`  |No|   Boolean. Whether to display the H5P icon. Default is `true`.
+`downloadUrl` |No| String. A path or URL that provides the `.h5p` file for download. Used by the `export` button.
+`fullScreen` |No| Boolean. Whether to enable the fullscreen button (if supported by the browser). Default is `false`.
+`embed` |No| Boolean. Whether to display the embed button. Default is `false`. (N.B. Setting this to `true` requires `embedCode` to be provided).
+`embedCode` | Yes, if `embed` is true | String. Embed/iframe code that users can copy. Placeholders `:w` and `:h` will be replaced. See [Caveats for Embed Code](#caveats-for-embed-code).
+`customCss` | No | String or Array of strings. Path(s) to custom CSS file(s).
+`customJs` | No | String or Array of strings. Path(s) to custom JavaScript file(s). Useful for adding external libraries like MathJax.
+`reportingIsEnabled` | No | Boolean. Set to `true` to enable the submit button, particularly for content like Interactive Book. Defaults to `false`.
+`xAPIObjectIRI`|No| String. An identifier for a single unique Activity, utilized when generating the xAPI [object](https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#acturi) field. Defaults to page host + pathname.
 
-2) User state & data _(kindly refer to [this section](#previous-state-restoration))_
+2) User state & data (refer to the [Previous State Restoration](#previous-state-restoration) section for more details)
 
 **Option name**|**Required**|**Description**
 -----|-----|----
-`contentUserData`| No| User previous content interaction state data. The data should be in JSON string format
-`saveFreq` |if `contentUserData` or `ajax.*` is set| How often current user engagement content state should be autosaved (in seconds). Default is `false`. 
-`postUserStatistics` | No | Indicates if H5P should post the results once a finish event is triggered. Default is `false`. **** _Requires `ajax.setFinishedUrl` property to be set_
-`ajax` | No | Object required if you need H5P to manage a learner's state 
-`ajax.setFinishedUrl`| No | Url where H5P should post the results once a finish event is triggered. **** _Requires `postUserStatistics` to be set to true_.
-`ajax.contentUserDataUrl`| No | Endpoint where H5P can manage current user state.  ****  _Requires `user` property to be set_|
-`user` | No | Current user data object.
-`user.name` | Yes | Used as xAPI actor's name
-`user.mail` | Yes | User email. Uniquely identifies the xAPI actor
+`contentUserData`| No| Array. Used to pass previously saved user state to the player. Expects an array of objects, e.g., `[{ dataType: 'state', previousState: 'JSON_STRING_OF_STATE', subContentId: '*' }]`.
+`saveFreq` | Yes, if `contentUserData` or `ajax.*` is set | Number. How often (in seconds) the current user engagement content state should be autosaved. Set to `false` to disable.
+`postUserStatistics` | No | Boolean. Indicates if H5P should post results upon a finish event. Default is `false`. (Requires `ajax.setFinishedUrl` to be set).
+`ajax` | No | Object. Required if you need H5P to manage a learner's state via AJAX calls.
+`ajax.setFinishedUrl`| No | String. URL where H5P should POST the results upon a finish event. (Requires `postUserStatistics` to be `true`).
+`ajax.contentUserDataUrl`| No | String. Endpoint for H5P to GET and POST the current user state. (Requires `user` property to be set).
+`user` | No | Object. Current user data object.
+`user.name` | Yes, if `user` is provided | String. Name of the xAPI actor.
+`user.mail` | Yes, if `user` is provided | String. Email of the user, uniquely identifying the xAPI actor.
 
 
 **Note:**
@@ -116,7 +129,7 @@ The standalone H5P player constructor accepts two arguments.
 - Any path that starts with a forward slash `/` is treated as relative to the site root.
 - Any path starting with a dot is treated to be in respect to the current page directory.
 ----
-#### Example with advance options
+#### Example with Advanced Options
 ```javascript
 import { H5P } from 'h5p-standalone';
 
@@ -124,11 +137,11 @@ const el = document.getElementById('h5p-container');
 
 const options = {
     id: 'exercise-one',
-    frameJs: './frame.bundle.js',
-    frameCss: './styles/h5p.css',
+    frameJs: './assets/frame.bundle.js',    // Relative path to player script
+    frameCss: './assets/styles/h5p.css', // Relative path to player styles
     h5pJsonPath: '/path/to/h5p-folder',
-    contentJsonPath: '/path/to/h5p-folder', //content is on same folder level as h5p.json
-    librariesPath: '/path/to/shared/libaries', //shared libraries path
+    contentJsonPath: '/path/to/h5p-folder', // content.json is in the same folder as h5p.json
+    librariesPath: '/path/to/shared/libraries', // Optional: shared libraries path
     frame: true, //required to display copyright,  embed, & export buttons
     copyright: true,
     export: false,
@@ -136,13 +149,26 @@ const options = {
     downloadUrl: '/path/to/exercise-one.h5p',
     fullScreen: true, //enable fullscreen button
     embed: true,
-    embedCode:'<iframe width=":w" height=":h" src="https://replacethiswithyoururl.io" frameBorder="0" scrolling="no" styles="width:100%"></iframe>',
-    customCss: ['/path/to/some-css.css', '/path/to/some-other-css.css'], // custom stylesheets
-    customJs: '/path/to/custom-script.js' // custom script
+    embedCode: '<iframe width=":w" height=":h" src="https://your-site.com/h5p-embed/exercise-one" frameBorder="0" scrolling="no" style="width:100%"></iframe>',
+    customCss: [
+        '/path/to/custom-styles.css',
+        '/path/to/another-theme.css'
+    ],
+    // Example for customJs: Loading MathJax for mathematical expressions
+    // Option 1: Using a CDN
+    customJs: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+    // Option 2: Using a local file (ensure the file is available in your project relative to HTML)
+    // customJs: './path/to/your/local/mathjax/tex-mml-chtml.js',
+    // Option 3: Loading multiple custom scripts (paths relative to HTML or absolute URLs)
+    // customJs: [
+    //   './scripts/my-first-custom-script.js',
+    //   'https://example.com/another-script.js',
+    //   './vendor/mathjax/tex-mml-chtml.js'
+    // ],
+    reportingIsEnabled: true, // Enable submit button for content like Interactive Book
   };
 
-
-new H5P(el,options)
+new H5P(el, options)
 .then(() => {
   // do stuff
 });
@@ -207,10 +233,10 @@ new H5PStandalone.H5P(el, options).then(function () {
 ```
 2) Using `async` function
 ```js
-import { H5P as H5PStandalone } from 'h5p-standalone'; //you need you an alias due to conflict
+import { H5P as H5PStandalone } from 'h5p-standalone'; // Use an alias due to a potential naming conflict with the global H5P object
 
 async function myAwesomePlayer() {
-  const el = document.getElementById("h5p-container");
+  const el = document.getElementById('h5p-container');
   const options = {
     h5pJsonPath: "/h5p-folder",
     frameJs: "/assets/frame.bundle.js",
@@ -230,46 +256,212 @@ myAwesomePlayer();
 
 ```
 
-##  Previous state restoration.
-H5P provides two approaches for restoring a user's previous interaction state:
-1) using data provided with `contentUserData` option.
-2) automatically fetching the data if `ajax.contentUserDataUrl` is provided
+## Previous State Restoration
 
-**For both cases, the `saveFreq` option must be set**.
+This section describes how to save and load a user's progress and interactions within an H5P content. This "user state" is distinct from xAPI events, which are typically used for reporting completion or scores to a Learning Record Store (LRS). Restoring user state allows learners to resume their work exactly where they left off.
 
-A summary of the previous state restoration process:
+There are two main approaches to manage user state with this player:
 
-1) If the `contentUserData` option is available, skip to the 3rd step.
-2) If `contentUserData` is not available but `user.*` and `ajax.contentUserDataUrl` options were provided, request the data from `ajax.contentUserDataUrl` endpoint.
-3) Process the previous state `data` as follows:
-    - where `data[0].state` equals `RESET`, any previous state will be deleted
-    - else, parse `data[0].state` string and pass it to the H5P player instance.
-    
- `ajax.contentUserDataUrl` may include (contentId,dataType,subContentId) placeholders that will be replaced with respective data _automagically_. Placeholders are prefixed with `:`
- Placeholders are effective when you need to query only current content user data.
- 
- `ajax.contentUserDataUrl` example:
- `/api/users/123/h5p/:contentId?data_type=:dataType&subContentId=:subContentId`
+### 1. Manual User State Management
 
-### Caveats while adding embed code
-- This library includes an H5P resizer by default in `main.bundle.js` at the moment. But, to allow the iframe width to resize promptly, add CSS style setting the width to 100% i.e. `style="width:100%;"`
-- If you want to allow users to resize the iframe width and height, set them using placeholders provided by H5P i.e., `width=":w"` and `height=":h"`
+In this method, your application is responsible for saving and loading the H5P state, often using browser `localStorage` or a custom backend solution.
 
-An example that combines the above points:
+**Loading Initial State:**
+You provide the previously saved state to the player via the `contentUserData` option. This option expects an array containing an object with the user's state.
 
-```js
-<iframe width=":w" height=":h"
-src="https://app.wikonnect.org/embed/JJuzs-OAACU"  //replace this with your URL
-frameBorder="0" scrolling="no" styles="width:100%"></iframe>
+**Retrieving Current State for Saving:**
+After the H5P content is initialized, its current state can be accessed from the global `window.H5PIntegration.contents` object. The key for accessing specific content is typically `cid-{content-id}`, where `{content-id}` is the unique ID of the H5P content instance.
+
+**Saving State Periodically:**
+You can implement a mechanism (e.g., using `setInterval`) to periodically retrieve and save this state. The `saveFreq` option in the player configuration can also influence H5P's internal saving behavior, but for full manual control, direct retrieval is shown below.
+
+**Example:**
+
+```javascript
+// --- Configuration ---
+// Use the ID you passed in options, or a default if options.id is not set.
+// This ID is used for your storage key.
+const H5P_STORAGE_KEY_ID = options.id || 'my-unique-h5p-content';
+const H5P_SAVE_INTERVAL_SECONDS = 10; // Save every 10 seconds
+
+// --- Helper Functions ---
+// Function to retrieve saved state (e.g., from localStorage)
+function retrieveSavedContentState(storageKeyId) {
+  const savedState = localStorage.getItem(`h5pState-${storageKeyId}`);
+  return savedState ? JSON.parse(savedState) : null; // Ensure it's parsed or null
+}
+
+// Function to save state (e.g., to localStorage)
+function saveContentState(storageKeyId, stateString) {
+  // H5P contentUserData is typically a string (JSON stringified).
+  // H5P core might sometimes pass undefined or null initially before interaction.
+  if (typeof stateString === 'string') {
+    localStorage.setItem(`h5pState-${storageKeyId}`, stateString);
+    console.log('H5P state saved for', storageKeyId);
+  }
+}
+
+// --- H5P Initialization ---
+// Define 'el' (HTML element) and 'options' for the H5P player.
+// const el = document.getElementById('h5p-container');
+// const options = { id: 'my-h5p-activity', h5pJsonPath: '...', frameJs: '...', frameCss: '...' };
+
+// Load initial state if available
+const previousStateJSON = retrieveSavedContentState(H5P_STORAGE_KEY_ID);
+if (previousStateJSON) {
+  options.contentUserData = [ // Must be an array
+    {
+      dataType: 'state', // Common dataType for previous state
+      previousState: previousStateJSON, // The actual state string
+      subContentId: '*' // Apply to all sub-contents, or specify if needed
+    }
+  ];
+}
+
+// Set save frequency for H5P's internal mechanisms if desired,
+// or set to false if relying purely on manual setInterval.
+// If numeric (seconds), H5P will attempt its own AJAX save if ajax.contentUserDataUrl is set.
+// For this manual example, we might set it to false or rely on our own interval.
+options.saveFreq = false; // Or a number like 10 (for 10 seconds)
+
+
+// Initialize H5P
+const h5pInstance = new H5PStandalone.H5P(el, options);
+
+h5pInstance.then(() => {
+  // The actual contentId used internally by H5P.
+  // This is often the same as options.id if options.id was provided and valid.
+  // If options.id was not provided, H5P generates one.
+  const actualContentId = h5pInstance.contentId;
+  const internalH5PKey = `cid-${actualContentId}`; // Key for H5PIntegration.contents
+
+  console.log(`H5P initialized. Storage key ID: ${H5P_STORAGE_KEY_ID}, Actual H5P Content ID: ${actualContentId}`);
+
+  // Setup periodic saving using the actualContentId for retrieval
+  // This interval is independent of H5P's internal saveFreq if saveFreq is false.
+  // If options.saveFreq is a number, H5P may also try to save, potentially to an AJAX endpoint.
+  // For purely manual localStorage saving, ensure options.saveFreq = false and options.ajax is not set.
+  if (H5P_SAVE_INTERVAL_SECONDS > 0) {
+    setInterval(() => {
+      if (window.H5PIntegration &&
+          window.H5PIntegration.contents &&
+          window.H5PIntegration.contents[internalH5PKey]) {
+
+        // contentUserData from H5PIntegration is already a string (JSON of the state)
+        const currentStateString = window.H5PIntegration.contents[internalH5PKey].contentUserData;
+        saveContentState(H5P_STORAGE_KEY_ID, currentStateString);
+      }
+    }, H5P_SAVE_INTERVAL_SECONDS * 1000); // Convert seconds to milliseconds for setInterval
+  }
+});
 ```
 
+**Explanation of the example:**
+*   `H5P_STORAGE_KEY_ID`:  A consistent identifier for your content, used as part of the key for `localStorage`. It's recommended to use `options.id` if you provide one to the player, or establish another unique ID.
+*   `retrieveSavedContentState`: Fetches the state string from `localStorage`. The state is typically stored as a JSON string.
+*   `saveContentState`: Saves the state string to `localStorage`.
+*   `options.contentUserData`: This is how you pass the loaded state *to* the H5P player when it initializes. It expects an array of objects. The `previousState` property holds the actual state data (as a JSON string). `dataType: 'state'` is commonly used.
+*   `h5pInstance.contentId`: After `new H5PStandalone.H5P(el, options)` resolves, `h5pInstance.contentId` provides the actual content ID that H5P is using. This might be the `options.id` you passed or one generated by H5P.
+*   `window.H5PIntegration.contents['cid-' + actualContentId].contentUserData`: This is the path to access the H5P content's current state *from* the H5P instance after it has been initialized and interacted with. The state here is usually already a JSON string.
+*   `setInterval`: This standard JavaScript function is used to periodically call a function that retrieves and saves the current H5P state.
+*   `options.saveFreq`: If you are using a manual `setInterval` like in this example for saving to `localStorage`, you might want to set `options.saveFreq = false;` to prevent H5P's own autosave mechanisms from potentially conflicting or making unnecessary calls (especially if `ajax.contentUserDataUrl` is not configured). If `saveFreq` is a number, H5P will attempt its own save logic at that interval.
+
+### 2. Automated User State Management
+
+This method relies on the H5P player automatically saving and loading the user state from a backend endpoint that you provide and implement.
+
+**Key Configuration Options:**
+
+For automated state management to function correctly, the following properties **must be correctly configured** within the `options` object passed to the H5P player:
+*   **`saveFreq`**: A numeric value representing the interval in seconds at which the player will attempt to save the user's state (e.g., `100` for every 100 seconds).
+*   **`ajax.contentUserDataUrl`**: A string representing the URL of your backend endpoint. H5P will make GET requests to this URL to load data and POST requests to save data. Placeholders like `:contentId` in the URL will be replaced by the player with actual values.
+*   **`user.name`**: A string for the current user's name.
+*   **`user.mail`**: A string for the current user's email. H5P core uses the email to uniquely identify the user for state storage purposes.
+
+**Example Configuration:**
+
+```javascript
+const el = document.getElementById('h5p-container'); // Your H5P container element
+const options = {
+  h5pJsonPath: '/content/course-presentation-one', // Path to your H5P content
+  frameJs: '/dist/frame.bundle.js',     // Path to player's frame.bundle.js
+  frameCss: '/dist/styles/h5p.css',   // Path to player's h5p.css
+
+  // --- Required for Automated State Management ---
+  saveFreq: 100, // Time in seconds for autosaving state
+  ajax: {
+    // URL for loading (GET) and saving (POST) user state.
+    // :contentId is a placeholder replaced by H5P with the actual content ID.
+    // Other placeholders like :dataType and :subContentId can also be used if your backend expects them.
+    contentUserDataUrl: '/api/v1/h5p/history/users/123/content/:contentId'
+  },
+  user: { // User object is required for automated state saving
+    name: 'John Doe',
+    mail: 'john@example.com' // Email is used by H5P core to uniquely identify the user
+  }
+  // --- End of Required Options ---
+};
+
+// Initialize the player
+// const h5pContentId = await new H5PStandalone(el, options);
+// If you need the contentId for any reason (e.g., if not providing options.id),
+// the new H5PStandalone(...) call returns it once the H5P content is fully loaded.
+await new H5PStandalone(el, options);
+```
+
+**Backend Implementation:**
+You are responsible for implementing the backend server logic at the specified `contentUserDataUrl`.
+*   **GET Request**: When H5P content loads, the player will make a GET request to your `contentUserDataUrl` (with placeholders like `:contentId` replaced). Your server should fetch and return the user's saved state for that content. The response should be JSON, typically an array containing an object, e.g., `[{ "dataType": "state", "previousState": "{\"some\":\"json-string\"}" }]`. If no state exists, returning an empty array `[]` or a relevant HTTP status code (like 404, which H5P should handle) is appropriate.
+*   **POST Request**: When H5P needs to save the state (triggered by `saveFreq`), it will make a POST request to the `contentUserDataUrl`. The body of the POST request will contain the user state data (typically a JSON string representing the H5P state). Your server should store this data, associating it with the user and content ID.
+
+**Understanding the Process (Debugging Tip):**
+To better understand how automated state saving works and what your backend needs to handle, you can configure the `saveFreq`, `ajax`, and `user` properties in your player options as shown above. Then, open your browser's developer tools and monitor the network requests (usually under the "Network" or "XHR" tab). This will show you the exact structure of the GET and POST requests H5P makes, including the URL, headers, and payload. Although these requests will likely fail if you haven't implemented the backend endpoints, observing them provides a clear picture of the expected communication pattern.
+
+The `contentUserDataUrl` can be structured flexibly to suit your backend routing and data model. H5P replaces known placeholders (like `:contentId`, `:dataType`, `:subContentId`) in the URL string before making the request.
+
+### Caveats for Embed Code
+- This library includes an H5P resizer by default. However, to ensure the iframe width resizes promptly with the parent page, add a CSS style setting `width: 100%` to the iframe tag itself.
+- If you want to allow users to resize the iframe's width and height using H5P's resize handles, set them using the placeholders `:w` and `:h` in the `width` and `height` attributes of the iframe.
+
+An example combining these points:
+```html
+<iframe width=":w" height=":h"
+src="https://app.wikonnect.org/embed/YOUR-CONTENT-ID"
+frameBorder="0" scrolling="no" style="width:100%"></iframe>
+```
 
 ### Extracting H5P
-1. Rename the H5P file extension from `.h5p` file to `.zip`
-2. Extract the renamed file contents into your workspace `h5p-folder` folder
+An `.h5p` file is a zip archive. To use its contents with this player:
+1. Rename the H5P file extension from `.h5p` to `.zip`.
+2. Extract the renamed file's contents into a folder in your project (e.g., `my-h5p-content`). This folder is what you'll point to with the `h5pJsonPath` option.
+
+## Troubleshooting
+
+Here are some common issues and how to resolve them:
+
+**Q: Why are some H5P elements missing or not working when I use content exported from h5p.org?**
+
+A: Exports from h5p.org are optimized and might not bundle all the necessary H5P libraries, as they assume the libraries might already exist on the target platform.
+To resolve this:
+*   **Get libraries from the content type's `.h5p`:** Download the `.h5p` file for the specific content type directly from h5p.org (e.g., from the content type's example page). These files usually contain all required libraries. Extract this `.h5p` file and copy the necessary library folders (e.g., `H5P.ExampleLibrary-1.0`) into your H5P content's `libraries` folder (the one you are using for `h5pJsonPath`).
+*   **Use fully bundled content:** Alternatively, use H5P content creation tools like [Lumi](https://lumi.education/) which typically package all dependencies within the exported `.h5p` file.
+Refer to the [Working with H5P Content](#working-with-h5p-content) section for more background.
+
+**Q: How do I get the 'Submit' button to show up in Interactive Books (or other content types)?**
+
+A: The 'Submit' button's visibility is often controlled by H5P content settings. With this player, you also need to enable it via the player options. Set `reportingIsEnabled: true` in the player options. See the `reportingIsEnabled` description in the [Advanced Usage](#advanced-usage) section for more details.
+
+**Q: How can I display mathematical formulas or equations?**
+
+A: To display mathematical formulas (e.g., LaTeX), you'll likely need an external library like MathJax. You can load such libraries using the `customJs` option in the player configuration. Please refer to the `customJs` option description and the example of loading MathJax in the [Advanced Usage](#advanced-usage) section.
 
 ## Testing during development
- After modifying the project, build the files:
- `` yarn build``
- to run available [Cypress](https://www.cypress.io/) tests:
-`` yarn test``
+After cloning the repository and installing dependencies with `yarn install`, you can modify the project.
+To build the distributable files:
+```bash
+yarn build
+```
+To run available [Cypress](https://www.cypress.io/) tests:
+```bash
+yarn test
+```
