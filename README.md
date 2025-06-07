@@ -35,10 +35,14 @@ This is the quickest way to get started with manual installation. You can link t
     const el = document.getElementById('h5p-container');
     const options = {
       h5pJsonPath: '/path/to/your/h5p-folder', // Path to your self-hosted H5P content directory
-      // When using main.bundle.js from CDN, frameJs and frameCss also need to point to CDN paths
-      // as main.bundle.js expects these to be resolvable.
+      // frameJs and frameCss are always required by the H5P player.
+      // This example sources them from the same CDN as main.bundle.js, which is recommended for version consistency and simplicity.
+      // However, you can point them to self-hosted paths if main.bundle.js is from a CDN and you prefer to host the frame files yourself.
+      // For example, if you self-host them in 'assets/h5p-player/':
+      // frameJs: 'assets/h5p-player/frame.bundle.js',
+      // frameCss: 'assets/h5p-player/styles/h5p.css',
       frameJs: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/frame.bundle.js',
-      frameCss: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css' // Path to the main H5P styles
+      frameCss: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css' // Path to the main H5P styles (can also be self-hosted)
     };
     // H5PStandalone is globally available when main.bundle.js is included via a script tag
     new H5PStandalone.H5P(el, options);
@@ -143,7 +147,7 @@ Content exported directly from h5p.org might not include all the necessary H5P l
 If you encounter issues with missing libraries, you have a couple of options:
 
 *   **Manually download libraries:** You might need to identify the missing libraries and download them separately from h5p.org, then place them in the appropriate H5P content folder.
-*   **Use bundled H5P content:** Obtain your H5P content from a source that explicitly bundles all required libraries within the `.h5p` file. Platforms like Lumi (https://lumi.education/) often provide such bundled exports.
+*   **Use bundled H5P content:** Obtain your H5P content from a source that explicitly bundles all required libraries within the `.h5p` file.
 
 ## Advanced Usage
 The standalone H5P player constructor `new H5PStandalone.H5P(el, options)` or `new H5P(el, options)` accepts two arguments:
@@ -170,7 +174,7 @@ The standalone H5P player constructor `new H5PStandalone.H5P(el, options)` or `n
 `embed` |No| Boolean. Whether to display the embed button. Default is `false`. (N.B. Setting this to `true` requires `embedCode` to be provided).
 `embedCode` | Yes, if `embed` is true | String. Embed/iframe code that users can copy. Placeholders `:w` and `:h` will be replaced. See [Caveats for Embed Code](#caveats-for-embed-code).
 `customCss` | No | String or Array of strings. Path(s) to custom CSS file(s).
-`customJs` | No | String or Array of strings. Path(s) to custom JavaScript file(s). Useful for adding external libraries like MathJax.
+`customJs` | No | String or Array of strings. Path(s) to custom JavaScript file(s). Useful for adding external libraries. See the [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq) for detailed examples like MathJax integration.
 `reportingIsEnabled` | No | Boolean. Set to `true` to enable the submit button, particularly for content like Interactive Book. Defaults to `false`.
 `xAPIObjectIRI`|No| String. An identifier for a single unique Activity, utilized when generating the xAPI [object](https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#acturi) field. Defaults to page host + pathname.
 
@@ -219,17 +223,8 @@ const options = {
         '/path/to/custom-styles.css',
         '/path/to/another-theme.css'
     ],
-    // Example for customJs: Loading MathJax for mathematical expressions
-    // Option 1: Using a CDN
-    customJs: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
-    // Option 2: Using a local file (ensure the file is available in your project relative to HTML)
-    // customJs: './path/to/your/local/mathjax/tex-mml-chtml.js',
-    // Option 3: Loading multiple custom scripts (paths relative to HTML or absolute URLs)
-    // customJs: [
-    //   './scripts/my-first-custom-script.js',
-    //   'https://example.com/another-script.js',
-    //   './vendor/mathjax/tex-mml-chtml.js'
-    // ],
+    customJs: '/path/to/your-custom-script.js', // Can be a single string or an array of strings
+    // For detailed examples, including how to load MathJax, see the [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq) section.
     reportingIsEnabled: true, // Enable submit button for content like Interactive Book
   };
 
@@ -329,7 +324,7 @@ There are two main approaches to manage user state with this player:
 
 ### 1. Manual User State Management
 
-In this method, your application is responsible for saving and loading the H5P state, often using browser `localStorage` or a custom backend solution.
+In this method, your application is responsible for saving and loading the H5P state in your preferred storage solution anywhere.
 
 **Loading Initial State:**
 You provide the previously saved state to the player via the `contentUserData` option. This option expects an array containing an object with the user's state.
@@ -343,93 +338,80 @@ You can implement a mechanism (e.g., using `setInterval`) to periodically retrie
 **Example:**
 
 ```javascript
-// --- Configuration ---
-// Use the ID you passed in options, or a default if options.id is not set.
-// This ID is used for your storage key.
+// This ID is used to create a unique key for storing the state of this specific H5P content,
+// especially useful if you have multiple H5P instances on the same page/domain.
+// It typically comes from options.id (if you set one) or can be derived from h5pInstance.contentId.
 const H5P_STORAGE_KEY_ID = options.id || 'my-unique-h5p-content';
-const H5P_SAVE_INTERVAL_SECONDS = 10; // Save every 10 seconds
+const H5P_SAVE_INTERVAL_SECONDS = 10; // Save state every 10 seconds
 
-// --- Helper Functions ---
-// Function to retrieve saved state (e.g., from localStorage)
+// Function to retrieve saved state from localStorage
 function retrieveSavedContentState(storageKeyId) {
   const savedState = localStorage.getItem(`h5pState-${storageKeyId}`);
-  return savedState ? JSON.parse(savedState) : null; // Ensure it's parsed or null
+  return savedState ? JSON.parse(savedState) : null;
 }
 
-// Function to save state (e.g., to localStorage)
+// Function to save state to localStorage
 function saveContentState(storageKeyId, stateString) {
-  // H5P contentUserData is typically a string (JSON stringified).
-  // H5P core might sometimes pass undefined or null initially before interaction.
-  if (typeof stateString === 'string') {
+  if (typeof stateString === 'string') { // H5P state is a JSON string
     localStorage.setItem(`h5pState-${storageKeyId}`, stateString);
-    console.log('H5P state saved for', storageKeyId);
+    console.log('H5P state saved for content ID:', storageKeyId);
   }
 }
 
-// --- H5P Initialization ---
-// Define 'el' (HTML element) and 'options' for the H5P player.
-// const el = document.getElementById('h5p-container');
-// const options = { id: 'my-h5p-activity', h5pJsonPath: '...', frameJs: '...', frameCss: '...' };
+// --- H5P Player Initialization Logic ---
+// Assume 'el' (HTML element for H5P) and 'options' are defined elsewhere in your script.
+// Example: const el = document.getElementById('h5p-container');
+// Example: const options = { id: 'my-h5p-activity', h5pJsonPath: '...', ... };
 
-// Load initial state if available
+// Load initial state before initializing the player
 const previousStateJSON = retrieveSavedContentState(H5P_STORAGE_KEY_ID);
 if (previousStateJSON) {
-  options.contentUserData = [ // Must be an array
+  options.contentUserData = [ // H5P expects an array
     {
-      dataType: 'state', // Common dataType for previous state
-      previousState: previousStateJSON, // The actual state string
-      subContentId: '*' // Apply to all sub-contents, or specify if needed
+      dataType: 'state',
+      previousState: previousStateJSON, // The state string
+      subContentId: '*' // Apply to all sub-contents
     }
   ];
 }
 
-// Set save frequency for H5P's internal mechanisms if desired,
-// or set to false if relying purely on manual setInterval.
-// If numeric (seconds), H5P will attempt its own AJAX save if ajax.contentUserDataUrl is set.
-// For this manual example, we might set it to false or rely on our own interval.
-options.saveFreq = false; // Or a number like 10 (for 10 seconds)
+// For purely manual saving with setInterval, ensure H5P's internal AJAX-based saving is off.
+// If options.saveFreq is a number and options.ajax.contentUserDataUrl is set, H5P will also try to save.
+options.saveFreq = false;
 
-
-// Initialize H5P
+// Initialize H5P Player
 const h5pInstance = new H5PStandalone.H5P(el, options);
 
+// After H5P is initialized, set up periodic saving
 h5pInstance.then(() => {
-  // The actual contentId used internally by H5P.
-  // This is often the same as options.id if options.id was provided and valid.
-  // If options.id was not provided, H5P generates one.
-  const actualContentId = h5pInstance.contentId;
-  const internalH5PKey = `cid-${actualContentId}`; // Key for H5PIntegration.contents
+  const actualContentId = h5pInstance.contentId; // The contentId H5P is actually using
+  const internalH5PKey = `cid-${actualContentId}`; // Key for accessing H5PIntegration.contents
 
-  console.log(`H5P initialized. Storage key ID: ${H5P_STORAGE_KEY_ID}, Actual H5P Content ID: ${actualContentId}`);
+  console.log(`H5P initialized. Using storage key ID: ${H5P_STORAGE_KEY_ID}. Actual H5P Content ID: ${actualContentId}`);
 
-  // Setup periodic saving using the actualContentId for retrieval
-  // This interval is independent of H5P's internal saveFreq if saveFreq is false.
-  // If options.saveFreq is a number, H5P may also try to save, potentially to an AJAX endpoint.
-  // For purely manual localStorage saving, ensure options.saveFreq = false and options.ajax is not set.
+  // Setup periodic saving using the H5P_STORAGE_KEY_ID for localStorage
   if (H5P_SAVE_INTERVAL_SECONDS > 0) {
     setInterval(() => {
       if (window.H5PIntegration &&
           window.H5PIntegration.contents &&
           window.H5PIntegration.contents[internalH5PKey]) {
 
-        // contentUserData from H5PIntegration is already a string (JSON of the state)
         const currentStateString = window.H5PIntegration.contents[internalH5PKey].contentUserData;
         saveContentState(H5P_STORAGE_KEY_ID, currentStateString);
       }
-    }, H5P_SAVE_INTERVAL_SECONDS * 1000); // Convert seconds to milliseconds for setInterval
+    }, H5P_SAVE_INTERVAL_SECONDS * 1000); // Convert seconds to milliseconds
   }
 });
 ```
 
 **Explanation of the example:**
-*   `H5P_STORAGE_KEY_ID`:  A consistent identifier for your content, used as part of the key for `localStorage`. It's recommended to use `options.id` if you provide one to the player, or establish another unique ID.
-*   `retrieveSavedContentState`: Fetches the state string from `localStorage`. The state is typically stored as a JSON string.
-*   `saveContentState`: Saves the state string to `localStorage`.
-*   `options.contentUserData`: This is how you pass the loaded state *to* the H5P player when it initializes. It expects an array of objects. The `previousState` property holds the actual state data (as a JSON string). `dataType: 'state'` is commonly used.
-*   `h5pInstance.contentId`: After `new H5PStandalone.H5P(el, options)` resolves, `h5pInstance.contentId` provides the actual content ID that H5P is using. This might be the `options.id` you passed or one generated by H5P.
-*   `window.H5PIntegration.contents['cid-' + actualContentId].contentUserData`: This is the path to access the H5P content's current state *from* the H5P instance after it has been initialized and interacted with. The state here is usually already a JSON string.
-*   `setInterval`: This standard JavaScript function is used to periodically call a function that retrieves and saves the current H5P state.
-*   `options.saveFreq`: If you are using a manual `setInterval` like in this example for saving to `localStorage`, you might want to set `options.saveFreq = false;` to prevent H5P's own autosave mechanisms from potentially conflicting or making unnecessary calls (especially if `ajax.contentUserDataUrl` is not configured). If `saveFreq` is a number, H5P will attempt its own save logic at that interval.
+*   `H5P_STORAGE_KEY_ID`: This variable should hold a unique identifier for the H5P content instance (e.g., derived from `options.id` or `h5pInstance.contentId`). It's crucial for creating a unique storage key (like `h5pState-${H5P_STORAGE_KEY_ID}`) to prevent different H5P contents from overwriting each other's states, especially if you host multiple H5Ps on the same domain.
+*   `retrieveSavedContentState` & `saveContentState`: These are example functions for interacting with `localStorage`. You can adapt them for any storage mechanism.
+*   `options.contentUserData`: Used to provide the initial saved state to the H5P player. It must be an array of objects, where each object contains the `previousState` (as a JSON string) and its `dataType` (usually 'state').
+*   `h5pInstance.contentId`: Once the player is initialized, `h5pInstance.contentId` gives the actual ID H5P uses for the content. This can be useful for more complex scenarios or if `options.id` was not initially provided.
+*   `window.H5PIntegration.contents['cid-' + actualContentId].contentUserData`: This is how you access the current state string from an active H5P content instance.
+*   `setInterval`: A standard JavaScript method used here to periodically trigger the saving of the H5P state.
+*   `options.saveFreq = false;`: When implementing a fully manual save mechanism like this `setInterval` example for `localStorage`, it's often best to set `options.saveFreq = false;`. This prevents potential conflicts with H5P's built-in autosave feature, which would try to save via AJAX if `ajax.contentUserDataUrl` were also configured. If you *do* want H5P's internal saving (e.g., to an AJAX endpoint) alongside manual saves, you can set `saveFreq` to a number (seconds).
 
 ### 2. Automated User State Management
 
@@ -464,7 +446,6 @@ const options = {
     name: 'John Doe',
     mail: 'john@example.com' // Email is used by H5P core to uniquely identify the user
   }
-  // --- End of Required Options ---
 };
 
 // Initialize the player
@@ -500,7 +481,7 @@ An `.h5p` file is a zip archive. To use its contents with this player:
 1. Rename the H5P file extension from `.h5p` to `.zip`.
 2. Extract the renamed file's contents into a folder in your project (e.g., `my-h5p-content`). This folder is what you'll point to with the `h5pJsonPath` option.
 
-## Troubleshooting
+## Frequently Asked Questions (FAQ)
 
 Here are some common issues and how to resolve them:
 
@@ -509,7 +490,7 @@ Here are some common issues and how to resolve them:
 A: Exports from h5p.org are optimized and might not bundle all the necessary H5P libraries, as they assume the libraries might already exist on the target platform.
 To resolve this:
 *   **Get libraries from the content type's `.h5p`:** Download the `.h5p` file for the specific content type directly from h5p.org (e.g., from the content type's example page). These files usually contain all required libraries. Extract this `.h5p` file and copy the necessary library folders (e.g., `H5P.ExampleLibrary-1.0`) into your H5P content's `libraries` folder (the one you are using for `h5pJsonPath`).
-*   **Use fully bundled content:** Alternatively, use H5P content creation tools like [Lumi](https://lumi.education/) which typically package all dependencies within the exported `.h5p` file.
+*   **Use fully bundled content:** Obtain your H5P content from a source that explicitly bundles all required libraries within the `.h5p` file.
 Refer to the [Working with H5P Content](#working-with-h5p-content) section for more background.
 
 **Q: How do I get the 'Submit' button to show up in Interactive Books (or other content types)?**
@@ -518,7 +499,61 @@ A: The 'Submit' button's visibility is often controlled by H5P content settings.
 
 **Q: How can I display mathematical formulas or equations?**
 
-A: To display mathematical formulas (e.g., LaTeX), you'll likely need an external library like MathJax. You can load such libraries using the `customJs` option in the player configuration. Please refer to the `customJs` option description and the example of loading MathJax in the [Advanced Usage](#advanced-usage) section.
+A: To display mathematical formulas (e.g., LaTeX), you'll likely need an external library like MathJax. You can load such libraries using the `customJs` option in the player configuration.
+Here's how you can configure `customJs` in the player options to load MathJax:
+
+```javascript
+// Within your player options:
+customJs: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js', // Option 1: Using a CDN
+
+// Or, if you host MathJax locally (ensure path is correct relative to your HTML file):
+// customJs: './path/to/your/local/mathjax/tex-mml-chtml.js', // Option 2: Using a local file
+
+// You can also load multiple custom scripts, including MathJax:
+// customJs: [
+//   './scripts/my-first-custom-script.js',
+//   'https://example.com/another-script.js',
+//   'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' // or your local path
+// ],
+```
+Refer to the `customJs` description in the [H5P Options](#h5p-options) table for more details on the option itself. Remember that the path to local scripts should be relative to your HTML file or an absolute URL.
+
+## Frequently Asked Questions (FAQ)
+
+Here are some common issues and how to resolve them:
+
+**Q: Why are some H5P elements missing or not working when I use content exported from h5p.org?**
+
+A: Exports from h5p.org are optimized and might not bundle all the necessary H5P libraries, as they assume the libraries might already exist on the target platform.
+To resolve this:
+*   **Get libraries from the content type's `.h5p`:** Download the `.h5p` file for the specific content type directly from h5p.org (e.g., from the content type's example page). These files usually contain all required libraries. Extract this `.h5p` file and copy the necessary library folders (e.g., `H5P.ExampleLibrary-1.0`) into your H5P content's `libraries` folder (the one you are using for `h5pJsonPath`).
+*   **Use fully bundled content:** Obtain your H5P content from a source that explicitly bundles all required libraries within the `.h5p` file.
+Refer to the [Working with H5P Content](#working-with-h5p-content) section for more background.
+
+**Q: How do I get the 'Submit' button to show up in Interactive Books (or other content types)?**
+
+A: The 'Submit' button's visibility is often controlled by H5P content settings. With this player, you also need to enable it via the player options. Set `reportingIsEnabled: true` in the player options. See the `reportingIsEnabled` description in the [Advanced Usage](#advanced-usage) section for more details.
+
+**Q: How can I display mathematical formulas or equations?**
+
+A: To display mathematical formulas (e.g., LaTeX), you'll likely need an external library like MathJax. You can load such libraries using the `customJs` option in the player configuration.
+Here's how you can configure `customJs` in the player options to load MathJax:
+
+```javascript
+// Within your player options:
+customJs: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js', // Option 1: Using a CDN
+
+// Or, if you host MathJax locally (ensure path is correct relative to your HTML file):
+// customJs: './path/to/your/local/mathjax/tex-mml-chtml.js', // Option 2: Using a local file
+
+// You can also load multiple custom scripts, including MathJax:
+// customJs: [
+//   './scripts/my-first-custom-script.js',
+//   'https://example.com/another-script.js',
+//   'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' // or your local path
+// ],
+```
+Refer to the `customJs` description in the [H5P Options](#h5p-options) table for more details on the option itself. Remember that the path to local scripts should be relative to your HTML file or an absolute URL.
 
 ## Testing during development
 After cloning the repository and installing dependencies with `yarn install`, you can modify the project.
