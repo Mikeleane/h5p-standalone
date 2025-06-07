@@ -6,15 +6,98 @@ Display H5P content without the need for an H5P server.
 This library can be installed and used in two main ways, depending on your project setup. After installation, ensure you have an H5P file (`.h5p`) and its contents extracted into a folder in your project. For a guide on this, see the [Extracting H5P](#extracting-h5p) section.
 
 ---
+### 1. Manual Installation (Direct use in HTML)
 
-### 1. Using a Package Manager (Recommended)
+This approach is suitable for simpler projects or when you don't have a JavaScript build pipeline. You have two options: using a CDN or downloading files.
+
+#### A) Using a CDN (Content Delivery Network)
+
+This is the quickest way to get started with manual installation. You can link to the player files directly from a CDN like jsDelivr.
+
+**Include these links in your HTML:**
+```html
+<!-- Replace @latest with a specific version, e.g., @3.9.0, for production -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css">
+<script src="https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/main.bundle.js" charset="UTF-8"></script>
+```
+**Note:** While `@latest` gets the newest version, it's recommended to pin to a specific version in production environments to avoid unexpected updates. For example, use `h5p-standalone@3.9.0` instead of `h5p-standalone@latest`.
+
+**Basic HTML Structure and Initialization:**
+```html
+<div id="h5p-container"></div>
+
+<!-- H5P Standalone Player from CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css">
+<script src="https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/main.bundle.js" charset="UTF-8"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const el = document.getElementById('h5p-container');
+    const options = {
+      h5pJsonPath: '/path/to/your/h5p-folder', // Path to your self-hosted H5P content directory
+      // When using main.bundle.js from CDN, frameJs and frameCss also need to point to CDN paths
+      // as main.bundle.js expects these to be resolvable.
+      frameJs: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/frame.bundle.js',
+      frameCss: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css' // Path to the main H5P styles
+    };
+    // H5PStandalone is globally available when main.bundle.js is included via a script tag
+    new H5PStandalone.H5P(el, options);
+  });
+</script>
+```
+Your H5P content (specified in `h5pJsonPath`) still needs to be hosted on your own server or accessible path.
+
+#### B) Downloading and Self-Hosting Files
+
+This method involves downloading the pre-built files from the releases page and hosting them yourself.
+
+**Installation Steps:**
+1.  Download the latest release source code (e.g., `h5p-standalone-vX.X.X.zip`) from the [releases page](https://github.com/tunapanda/h5p-standalone/releases/latest).
+2.  Extract the downloaded zip file.
+3.  Locate the `dist` folder within the extracted contents. Copy this `dist` folder into a suitable location in your project (e.g., rename it to `h5p-player` and place it in an `assets` directory like `assets/h5p-player`).
+
+**Usage Example (Self-Hosted):**
+After placing the files from the `dist` folder into your project:
+
+1.  Add an HTML `div` element where you want to display the H5P content. This `div` must have a unique `id`.
+    ```html
+    <div id="h5p-container"></div>
+    ```
+
+2.  Include the H5P standalone main script (`main.bundle.js`) in your HTML page. Modify the `src` path according to where you placed the `dist` folder's contents.
+    ```html
+    <script type="text/javascript" src="assets/h5p-player/main.bundle.js" charset="UTF-8"></script>
+    ```
+
+3.  Call the H5P player in a subsequent script tag, providing the `id` of your `div` and paths to the H5P content and the necessary player assets (`frame.bundle.js` and `h5p.css` from your self-hosted `dist` folder contents).
+    ```javascript
+    document.addEventListener('DOMContentLoaded', function () {
+      const el = document.getElementById('h5p-container');
+      const options = {
+        h5pJsonPath: '/path/to/your/h5p-folder', // Path to the extracted H5P content
+        frameJs: 'assets/h5p-player/frame.bundle.js', // Path to player's frame.bundle.js
+        frameCss: 'assets/h5p-player/styles/h5p.css', // Path to player's h5p.css
+      };
+      new H5PStandalone.H5P(el, options);
+    });
+    ```
+
+---
+
+### 2. Installation using a package manager
 
 This method is suitable for projects that utilize a JavaScript module bundler and a build process (e.g., Webpack, Rollup, Parcel, often used in frameworks like React, Vue, Angular, Svelte, Ember.js etc.).
 
 #### Installation
+Install the player using your favorite package manager, for example:
 ```bash
+# pnpm
+pnpm install h5p-standalone
+
+# yarn
 yarn add h5p-standalone
-# or
+
+# npm
 npm install h5p-standalone
 ```
 
@@ -44,42 +127,6 @@ const options = {
 new H5P(el, options);
 ```
 **Note on `frameJs` and `frameCss` paths:** When using with a bundler, you'll need to ensure that the `frame.bundle.js` and `h5p.css` files (from the `dist` folder of this package) are copied to a location accessible by your application (e.g., your public `assets` directory) during your build process. The paths in the `options` object must then point to these served files.
-
----
-
-### 2. Manual Installation (Direct use in HTML)
-
-This method involves downloading the pre-built files from the releases page and including them directly in your HTML. It's suitable for simpler projects or when you don't have a JavaScript build pipeline.
-
-#### Installation Steps
-1.  Download the latest release source code (e.g., `h5p-standalone-vX.X.X.zip`) from the [releases page](https://github.com/tunapanda/h5p-standalone/releases/latest).
-2.  Extract the downloaded zip file.
-3.  Locate the `dist` folder within the extracted contents. Copy this `dist` folder into a suitable location in your project (e.g., rename it to `h5p-player` and place it in an `assets` directory like `assets/h5p-player`).
-
-#### Usage with Manual Installation
-After placing the files from the `dist` folder into your project:
-
-1.  Add an HTML `div` element where you want to display the H5P content. This `div` must have a unique `id`.
-    ```html
-    <div id="h5p-container"></div>
-    ```
-
-2.  Include the H5P standalone main script (`main.bundle.js`) in your HTML page. Modify the `src` path according to where you placed the `dist` folder's contents.
-    ```html
-    <script type="text/javascript" src="assets/h5p-player/main.bundle.js"></script>
-    ```
-
-3.  Call the H5P player in a subsequent script tag, providing the `id` of your `div` and paths to the H5P content and the necessary player assets (`frame.bundle.js` and `h5p.css` from the `dist` folder).
-    ```javascript
-    const el = document.getElementById('h5p-container');
-    const options = {
-      h5pJsonPath: '/path/to/your/h5p-folder', // Path to the extracted H5P content
-      frameJs: 'assets/h5p-player/frame.bundle.js', // Path to player's frame.bundle.js
-      frameCss: 'assets/h5p-player/styles/h5p.css', // Path to player's h5p.css
-    };
-    // H5PStandalone is globally available when main.bundle.js is included via a script tag
-    new H5PStandalone.H5P(el, options);
-    ```
 
 ---
 
