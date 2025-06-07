@@ -35,14 +35,8 @@ This is the quickest way to get started with manual installation. You can link t
     const el = document.getElementById('h5p-container');
     const options = {
       h5pJsonPath: '/path/to/your/h5p-folder', // Path to your self-hosted H5P content directory
-      // frameJs and frameCss are always required by the H5P player.
-      // This example sources them from the same CDN as main.bundle.js, which is recommended for version consistency and simplicity.
-      // However, you can point them to self-hosted paths if main.bundle.js is from a CDN and you prefer to host the frame files yourself.
-      // For example, if you self-host them in 'assets/h5p-player/':
-      // frameJs: 'assets/h5p-player/frame.bundle.js',
-      // frameCss: 'assets/h5p-player/styles/h5p.css',
-      frameJs: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/frame.bundle.js',
-      frameCss: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css' // Path to the main H5P styles (can also be self-hosted)
+      frameJs: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/frame.bundle.js', // Required: Path to frame.bundle.js (CDN or self-hosted)
+      frameCss: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css' // Required: Path to h5p.css (CDN or self-hosted)
     };
     // H5PStandalone is globally available when main.bundle.js is included via a script tag
     new H5PStandalone.H5P(el, options);
@@ -324,94 +318,78 @@ There are two main approaches to manage user state with this player:
 
 ### 1. Manual User State Management
 
-In this method, your application is responsible for saving and loading the H5P state in your preferred storage solution anywhere.
+In this method, your application is responsible for saving and loading the H5P state in your preferred storage solution anywhere. You provide the previously saved state to the player via the `contentUserData` option and implement functions to retrieve and save the state as needed.
 
-**Loading Initial State:**
-You provide the previously saved state to the player via the `contentUserData` option. This option expects an array containing an object with the user's state.
+The example below shows a basic HTML structure and JavaScript for this approach. You'll need to:
+1.  Define a unique `CONTENT_ID` for each H5P instance to avoid state collisions if you have multiple players.
+2.  Implement the `retrieveSavedContentState` and `saveContentState` functions to interact with your chosen storage (e.g., `localStorage`, a backend API).
+3.  Pass the loaded state (as a JSON string or `null`) to `options.contentUserData[0].previousState`.
+4.  Use `setInterval` (or another mechanism) to periodically call `saveContentState`. The `options.saveFreq` (in seconds) can be used to configure this interval.
 
-**Retrieving Current State for Saving:**
-After the H5P content is initialized, its current state can be accessed from the global `window.H5PIntegration.contents` object. The key for accessing specific content is typically `cid-{content-id}`, where `{content-id}` is the unique ID of the H5P content instance.
+```html
+<div id="h5p-container"></div>
 
-**Saving State Periodically:**
-You can implement a mechanism (e.g., using `setInterval`) to periodically retrieve and save this state. The `saveFreq` option in the player configuration can also influence H5P's internal saving behavior, but for full manual control, direct retrieval is shown below.
-
-**Example:**
-
-```javascript
-// This ID is used to create a unique key for storing the state of this specific H5P content,
-// especially useful if you have multiple H5P instances on the same page/domain.
-// It typically comes from options.id (if you set one) or can be derived from h5pInstance.contentId.
-const H5P_STORAGE_KEY_ID = options.id || 'my-unique-h5p-content';
-const H5P_SAVE_INTERVAL_SECONDS = 10; // Save state every 10 seconds
-
-// Function to retrieve saved state from localStorage
-function retrieveSavedContentState(storageKeyId) {
-  const savedState = localStorage.getItem(`h5pState-${storageKeyId}`);
-  return savedState ? JSON.parse(savedState) : null;
-}
-
-// Function to save state to localStorage
-function saveContentState(storageKeyId, stateString) {
-  if (typeof stateString === 'string') { // H5P state is a JSON string
-    localStorage.setItem(`h5pState-${storageKeyId}`, stateString);
-    console.log('H5P state saved for content ID:', storageKeyId);
+<script>
+  // Example functions for saving/retrieving state
+  // Adapt these to your actual storage mechanism
+  async function retrieveSavedContentState(contentId){
+    // 👉 Your implementation that returns the state for this content (and of course for this user)
+    // For example, you might fetch it from a server:
+    // const response = await fetch(`/api/h5p-state/${contentId}`);
+    // if (response.ok) return await response.text(); // Assuming state is a JSON string
+    // return null;
+    console.log(`Placeholder: Attempting to retrieve state for contentId: ${contentId}`);
+    return null; // Replace with actual retrieval logic
   }
-}
 
-// --- H5P Player Initialization Logic ---
-// Assume 'el' (HTML element for H5P) and 'options' are defined elsewhere in your script.
-// Example: const el = document.getElementById('h5p-container');
-// Example: const options = { id: 'my-h5p-activity', h5pJsonPath: '...', ... };
-
-// Load initial state before initializing the player
-const previousStateJSON = retrieveSavedContentState(H5P_STORAGE_KEY_ID);
-if (previousStateJSON) {
-  options.contentUserData = [ // H5P expects an array
-    {
-      dataType: 'state',
-      previousState: previousStateJSON, // The state string
-      subContentId: '*' // Apply to all sub-contents
+  function saveContentState(contentId){
+    if (window.H5PIntegration && window.H5PIntegration.contents && window.H5PIntegration.contents[`cid-${contentId}`]) {
+      const currentState = window.H5PIntegration.contents[`cid-${contentId}`].contentUserData;
+      // 👉 Your implementation to save this state (currentState is a JavaScript object/array)
+      // For example, you might send it to a server:
+      // await fetch(`/api/h5p-state/${contentId}`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(currentState)
+      // });
+      console.log(`Placeholder: Saving state for contentId: ${contentId}`, currentState);
+    } else {
+      console.warn(`H5PIntegration not ready or content not found for cid-${contentId} when trying to save state.`);
     }
-  ];
-}
-
-// For purely manual saving with setInterval, ensure H5P's internal AJAX-based saving is off.
-// If options.saveFreq is a number and options.ajax.contentUserDataUrl is set, H5P will also try to save.
-options.saveFreq = false;
-
-// Initialize H5P Player
-const h5pInstance = new H5PStandalone.H5P(el, options);
-
-// After H5P is initialized, set up periodic saving
-h5pInstance.then(() => {
-  const actualContentId = h5pInstance.contentId; // The contentId H5P is actually using
-  const internalH5PKey = `cid-${actualContentId}`; // Key for accessing H5PIntegration.contents
-
-  console.log(`H5P initialized. Using storage key ID: ${H5P_STORAGE_KEY_ID}. Actual H5P Content ID: ${actualContentId}`);
-
-  // Setup periodic saving using the H5P_STORAGE_KEY_ID for localStorage
-  if (H5P_SAVE_INTERVAL_SECONDS > 0) {
-    setInterval(() => {
-      if (window.H5PIntegration &&
-          window.H5PIntegration.contents &&
-          window.H5PIntegration.contents[internalH5PKey]) {
-
-        const currentStateString = window.H5PIntegration.contents[internalH5PKey].contentUserData;
-        saveContentState(H5P_STORAGE_KEY_ID, currentStateString);
-      }
-    }, H5P_SAVE_INTERVAL_SECONDS * 1000); // Convert seconds to milliseconds
   }
-});
-```
 
-**Explanation of the example:**
-*   `H5P_STORAGE_KEY_ID`: This variable should hold a unique identifier for the H5P content instance (e.g., derived from `options.id` or `h5pInstance.contentId`). It's crucial for creating a unique storage key (like `h5pState-${H5P_STORAGE_KEY_ID}`) to prevent different H5P contents from overwriting each other's states, especially if you host multiple H5Ps on the same domain.
-*   `retrieveSavedContentState` & `saveContentState`: These are example functions for interacting with `localStorage`. You can adapt them for any storage mechanism.
-*   `options.contentUserData`: Used to provide the initial saved state to the H5P player. It must be an array of objects, where each object contains the `previousState` (as a JSON string) and its `dataType` (usually 'state').
-*   `h5pInstance.contentId`: Once the player is initialized, `h5pInstance.contentId` gives the actual ID H5P uses for the content. This can be useful for more complex scenarios or if `options.id` was not initially provided.
-*   `window.H5PIntegration.contents['cid-' + actualContentId].contentUserData`: This is how you access the current state string from an active H5P content instance.
-*   `setInterval`: A standard JavaScript method used here to periodically trigger the saving of the H5P state.
-*   `options.saveFreq = false;`: When implementing a fully manual save mechanism like this `setInterval` example for `localStorage`, it's often best to set `options.saveFreq = false;`. This prevents potential conflicts with H5P's built-in autosave feature, which would try to save via AJAX if `ajax.contentUserDataUrl` were also configured. If you *do* want H5P's internal saving (e.g., to an AJAX endpoint) alongside manual saves, you can set `saveFreq` to a number (seconds).
+  // Main logic using async IIFE (Immediately Invoked Function Expression)
+  // to enable top-level await for retrieveSavedContentState.
+  (async () => {
+    const el = document.getElementById('h5p-container');
+    const CONTENT_ID = 'some-content-unique-id-xxxxx'; // Unique ID for this H5P instance
+
+    const previousStateJSON = await retrieveSavedContentState(CONTENT_ID);
+
+    const options = {
+      id: CONTENT_ID, // Must be the same as used for state saving/retrieval
+      h5pJsonPath: '/content/course-presentation-one', // Path to H5P content
+      frameJs: '/dist/frame.bundle.js',   // Path to H5P frame JS
+      frameCss: '/dist/styles/h5p.css', // Path to H5P frame CSS
+      saveFreq: 100, // Required: How often H5P core attempts to save state (in seconds)
+      contentUserData: [ // Must be an array
+        {
+          dataType: 'state',
+          previousState: previousStateJSON, // Should be a JSON string or null
+        }
+      ]
+    };
+
+    // Initialize H5P player
+    await new H5PStandalone(el, options);
+    // Note: `new H5PStandalone(el, options)` returns the contentId (options.id) upon successful load.
+
+    // Periodically save the content state
+    setInterval(() => saveContentState(CONTENT_ID), options.saveFreq * 1000);
+  })();
+</script>
+```
+Remember to replace placeholder paths for `h5pJsonPath`, `frameJs`, and `frameCss` with your actual paths. The `saveFreq` option in this manual setup is used to control the `setInterval` frequency; if you also have `ajax.contentUserDataUrl` configured (for automated state management), H5P core might initiate its own save attempts at this frequency too.
 
 ### 2. Automated User State Management
 
