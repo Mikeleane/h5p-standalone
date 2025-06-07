@@ -27,26 +27,26 @@ This is the quickest way to get started with manual installation. You can link t
 <html>
 </head>
 <body>
-
-  <div id="h5p-container"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/main.bundle.js"></script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-
-
-    const options = {
-      h5pJsonPath: '/path/to/your/h5p-folder', // Path to your self-hosted H5P content directory
-      frameJs: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/frame.bundle.js',
-      frameCss: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css',
-    };
-
-    const el = document.getElementById('h5p-container');
-    // H5PStandalone is globally available when main.bundle.js is included via a script tag
-    new H5PStandalone.H5P(el, options);
-  });
-</script>
+	 <div id="h5p-container"></div>
+	
+	<script src="https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/main.bundle.js"></script>
+	
+	<script>
+	  document.addEventListener('DOMContentLoaded', function () {
+	
+	    const options = {
+	      h5pJsonPath: '/path/to/your/h5p-folder', // Path to your self-hosted H5P content directory
+	      frameJs: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/frame.bundle.js',
+	      frameCss: 'https://cdn.jsdelivr.net/npm/h5p-standalone@latest/dist/styles/h5p.css',
+	    };
+	
+	    const el = document.getElementById('h5p-container');
+	
+	    // H5PStandalone is globally available when main.bundle.js is included via a script tag
+	    new H5PStandalone.H5P(el, options);
+	
+	  });
+	</script>
 
 </body>
 </html>
@@ -92,7 +92,7 @@ After placing the files from the `dist` folder into your project:
 
 ### 2. Installation using a package manager
 
-This method is suitable for projects that utilize a JavaScript module bundler and a build process (e.g., Webpack, Rollup, Parcel, often used in frameworks like React, Vue, Angular, Svelte, Ember.js etc.).
+This method is suitable for projects that utilize a JavaScript module bundler and a build process.
 
 #### Installation
 Install the player using your favorite package manager, for example:
@@ -107,7 +107,7 @@ yarn add h5p-standalone
 npm install h5p-standalone
 ```
 
-#### Usage with ES6 Imports (e.g., in React, Vue, Svelte, Angular projects)
+#### Usage with ES6 Module Imports (e.g., in React, Vue, Svelte, Ember,Angular projects )
 After installation via a package manager, you can import the player into your JavaScript modules.
 
 Add an HTML element to your page where the H5P content will be rendered:
@@ -118,14 +118,11 @@ Add an HTML element to your page where the H5P content will be rendered:
 Then, initialize the player in your JavaScript:
 ```javascript
 import { H5P } from 'h5p-standalone'; // ES6 Import
-// const { H5P } = require('h5p-standalone'); // For CommonJS environments if needed
+// const { H5P } = require('h5p-standalone'); // For CommonJS environments 
 
 const el = document.getElementById('h5p-container');
 const options = {
     h5pJsonPath: '/path/to/your/h5p-folder', // Path to the extracted H5P content
-    // frameJs and frameCss paths below depend on how your project serves static assets.
-    // If using a bundler, you might need to copy these from node_modules/h5p-standalone/dist
-    // to your public assets folder during your build process.
     frameJs: '/assets/h5p-standalone/frame.bundle.js', // Adjust path as per your project structure
     frameCss: '/assets/h5p-standalone/styles/h5p.css', // Adjust path as per your project structure
 };
@@ -220,13 +217,12 @@ const options = {
     downloadUrl: '/path/to/exercise-one.h5p',
     fullScreen: true, //enable fullscreen button
     embed: true,
-    embedCode: '<iframe width=":w" height=":h" src="https://your-site.com/h5p-embed/exercise-one" frameBorder="0" scrolling="no" style="width:100%"></iframe>',
+    embedCode: '<iframe width=":w" height=":h" src="https://YOURSITE/h5p-embed/exercise-one" frameBorder="0" scrolling="no" style="width:100%"></iframe>',
     customCss: [
         '/path/to/custom-styles.css',
         '/path/to/another-theme.css'
     ],
     customJs: '/path/to/your-custom-script.js', // Can be a single string or an array of strings
-    // For detailed examples, including how to load MathJax, see the [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq) section.
     reportingIsEnabled: true, // Enable submit button for content like Interactive Book
   };
 
@@ -234,9 +230,6 @@ new H5P(el, options)
 .then(() => {
   // do stuff
 });
-
-// Or using the async-await syntax (async wrapper function removed for readability) :
- await new H5P(el, options);
 
 ```
 
@@ -259,14 +252,7 @@ const player2Options = {
 
 const player1 = new H5P(document.getElementById('h5p-container-1'), player1Options);
 
-player1.then(() => {
-  return new H5P(document.getElementById('h5p-container-2'), player2Options);
-}).then(() => {
-  // do stuff
-});
-
-
-// OR (async wrapper function removed for readability)
+//example using top level await
 await new H5P(document.getElementById('h5p-container-1'), player1Options);
 await new H5P(document.getElementById('h5p-container-2'), player2Options);
 
@@ -275,7 +261,7 @@ await new H5P(document.getElementById('h5p-container-2'), player2Options);
 
 ## Listening to xAPI events
 To listen for [xAPI events](https://h5p.org/documentation/api/H5P.XAPIEvent.html) emitted by the player, you must wait for the player to finish loading and initializing the required content libraries. You can find more info about xAPI events here https://h5p.org/documentation/x-api
-1) Using `then()` method
+
 ```js
 
 const el = document.getElementById("h5p-container");
@@ -291,30 +277,6 @@ new H5PStandalone.H5P(el, options).then(function () {
     console.log("xAPI event: ", event);
   });
 });
-
-```
-2) Using `async` function
-```js
-import { H5P as H5PStandalone } from 'h5p-standalone'; // Use an alias due to a potential naming conflict with the global H5P object
-
-async function myAwesomePlayer() {
-  const el = document.getElementById('h5p-container');
-  const options = {
-    h5pJsonPath: "/h5p-folder",
-    frameJs: "/assets/frame.bundle.js",
-    frameCss: "/assets/styles/h5p.css",
-  };
-
-  await new H5PStandalone(el, options);
-
-  H5P.externalDispatcher.on("xAPI", (event) => {
-    //do something useful with the event
-    console.log("xAPI event: ", event);
-  });
-}
-
-//don't forget to call the function
-myAwesomePlayer();
 
 ```
 
@@ -361,9 +323,7 @@ const options = {
   ]
 }
 
-// 'el' would need to be defined in the scope where this script runs, e.g.:
-// const el = document.getElementById('h5p-container');
-await new H5PStandalone(el, options) //FYI: this returns contentId and not h5p instance
+await new H5PStandalone(el, options); //init the h5p player.
 
 
 //call above function periodically, here we are using same time as this content H5P player saving frequency (multiplied by 1000 to convert into miliseconds)
@@ -378,7 +338,6 @@ This method relies on the H5P player automatically saving and loading the user s
 **Example Configuration:**
 
 ```javascript
-const el = document.getElementById('h5p-container'); // Your H5P container element
 const options = {
   h5pJsonPath: '/content/course-presentation-one', // Path to your H5P content
   frameJs: '/dist/frame.bundle.js',     // Path to player's frame.bundle.js
@@ -394,14 +353,9 @@ const options = {
   user: { // User object is required for automated state saving
     name: 'John Doe',
     mail: 'john@example.com' // Email is used by H5P core to uniquely identify the user
-  }
+  },
 };
 
-// Initialize the player
-// const h5pContentId = await new H5PStandalone(el, options);
-// If you need the contentId for any reason (e.g., if not providing options.id),
-// the new H5PStandalone(...) call returns it once the H5P content is fully loaded.
-await new H5PStandalone(el, options);
 ```
 
 **Backend Implementation:**
@@ -411,16 +365,6 @@ You are responsible for implementing the backend server logic at the specified `
 
 The `contentUserDataUrl` can be structured flexibly to suit your backend routing and data model. H5P replaces known placeholders (like `:contentId`, `:dataType`, `:subContentId`) in the URL string before making the request.
 
-### Caveats for Embed Code
-- This library includes an H5P resizer by default. However, to ensure the iframe width resizes promptly with the parent page, add a CSS style setting `width: 100%` to the iframe tag itself.
-- If you want to allow users to resize the iframe's width and height using H5P's resize handles, set them using the placeholders `:w` and `:h` in the `width` and `height` attributes of the iframe.
-
-An example combining these points:
-```html
-<iframe width=":w" height=":h"
-src="https://app.wikonnect.org/embed/YOUR-CONTENT-ID"
-frameBorder="0" scrolling="no" style="width:100%"></iframe>
-```
 
 ### Extracting H5P
 An `.h5p` file is a zip archive. To use its contents with this player:
@@ -433,7 +377,7 @@ Here are some common issues and how to resolve them:
 
 **Q: Why are some H5P elements missing or not working when I use content exported from h5p.org?**
 
-A: Exports from h5p.org are optimized and might not bundle all the necessary H5P libraries, as they assume the libraries might already exist on the target platform.
+Exports from h5p.org are optimized and might not bundle all the necessary H5P libraries, as they assume the libraries might already exist on the target platform.
 To resolve this:
 *   **Get libraries from the content type's `.h5p`:** Download the `.h5p` file for the specific content type directly from h5p.org (e.g., from the content type's example page). These files usually contain all required libraries. Extract this `.h5p` file and copy the necessary library folders (e.g., `H5P.ExampleLibrary-1.0`) into your H5P content's `libraries` folder (the one you are using for `h5pJsonPath`).
 *   **Use fully bundled content:** Obtain your H5P content from a source that explicitly bundles all required libraries within the `.h5p` file.
@@ -441,21 +385,21 @@ Refer to the [Working with H5P Content](#working-with-h5p-content) section for m
 
 **Q: How do I get the 'Submit' button to show up in Interactive Books (or other content types)?**
 
-A: The 'Submit' button's visibility is often controlled by H5P content settings. With this player, you also need to enable it via the player options. Set `reportingIsEnabled: true` in the player options. See the `reportingIsEnabled` description in the [Advanced Usage](#advanced-usage) section for more details.
+The 'Submit' button visibility on interactive book is controlled by setting `reportingIsEnabled: true` in the player options. See the `reportingIsEnabled` description in the [Advanced Usage](#advanced-usage) section for more details.
 
 **Q: How can I display mathematical formulas or equations?**
 
-A: To display mathematical formulas (e.g., LaTeX), you'll likely need an external library like MathJax. You can load such libraries using the `customJs` option in the player configuration.
+To display mathematical formulas as described on https://h5p.org/mathematical-expressions, you'll likely need an external library like MathJax. You can load such libraries using the `customJs` option in the player configuration.
 Here's how you can configure `customJs` in the player options to load MathJax:
 
 ```javascript
 // Within your player options:
+
 customJs: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js', // Option 1: Using a CDN
 
-// Or, if you host MathJax locally (ensure path is correct relative to your HTML file):
 // customJs: './path/to/your/local/mathjax/tex-mml-chtml.js', // Option 2: Using a local file
 
-// You can also load multiple custom scripts, including MathJax:
+// customJs accepts array if you already have multiple custom scripts, i.e.:
 // customJs: [
 //   './scripts/my-first-custom-script.js',
 //   'https://example.com/another-script.js',
@@ -463,6 +407,17 @@ customJs: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js', // Opti
 // ],
 ```
 Refer to the `customJs` description in the [H5P Options](#h5p-options) table for more details on the option itself. Remember that the path to local scripts should be relative to your HTML file or an absolute URL.
+
+
+**Q: How resizer for embed code works**
+- This library includes an H5P resizer by default. However, to ensure the iframe width resizes promptly with the parent page, add a CSS style setting `width: 100%` to the iframe tag itself.
+- If you want to allow users to resize the iframe's width and height using H5P's resize handles, set them using the placeholders `:w` and `:h` in the `width` and `height` attributes of the iframe.
+
+An example combining these points:
+```html
+<iframe width=":w" height=":h" src="https://app.wikonnect.org/embed/YOUR-CONTENT-ID" frameBorder="0" scrolling="no" style="width:100%">
+</iframe>
+```
 
 ## Testing during development
 After cloning the repository and installing dependencies with `yarn install`, you can modify the project.
