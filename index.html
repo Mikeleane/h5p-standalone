@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Comanda H5P Activity</title>
+  <script src="dist/h5p-standalone.min.js"></script>
+  <link rel="stylesheet" href="dist/styles/h5p.css">
+</head>
+<body>
+  <div id="h5p-container"></div>
+
+  <script>
+    new H5PStandalone.H5P(document.getElementById('h5p-container'), {
+      h5pJsonPath: 'comanda',
+      frameJs: 'dist/frame.bundle.js',
+      frameCss: 'dist/styles/h5p.css'
+    });
+  </script>
+</body>
+</html>
